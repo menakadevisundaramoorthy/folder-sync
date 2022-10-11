@@ -1,79 +1,83 @@
+import os
+
+
+# Create a new folder
+def create_folder(path):
+  if not path:
+    return 'WARNING - Path cannot be empty.'
+  if not os.path.isdir(path):
+    os.makedirs(path)
+    return "Created a new folder - " + path
+  else:
+    return "WARNING - The folder " + path + " already exists."
+
+
 # Create a new file or Update the existing file
 def create_or_update_file(file_name, file_content, is_update):
   if not file_name:
-    return 'File name cannot be empty.'
+    return 'WARNING - File name cannot be empty.'
   try:
-    with open(file_name, 'a' if is_update else 'w') as writefile:
-      writefile.write(file_content)
-      message = 'Updated the file - {}'.format(file_name) if is_update else 'Created a new file - {}'.format(file_name)
-      print(message)
-      return message
+    message = ""
+    if not is_update:
+      with open(file_name, 'w') as writeFile:
+        writeFile.write(file_content)
+        message = 'Created a new file - {}'.format(file_name)
+    else: 
+      with open(file_name, 'a') as updateFile:
+        updateFile.write(file_content)
+        message = 'Updated the file - {}'.format(file_name)
+    return message
   except Exception as exception:
-    print(exception)
-    return exception
+    return 'EXCEPTION - Exception in file_utils.create_or_update_file - ' + str(exception)
 
 
-# Read a file path and print the file content
+# To check if a folder exists in a given path or not
+def is_folder_exists(path):
+  return os.path.isdir(path)
+
+
+# deletes the file if present else returns the message file does not exists
+def delete_file(file_path):
+  if not file_path:
+    return 'WARNING - File path cannot be empty.'
+  if os.path.isfile(file_path):
+    os.remove(file_path)
+    return('Deleted the file - {}'.format(file_path))
+  else:
+    return 'WARNING - {} does not exist'.format(file_path)
+
+
+# Delete the existing folder
+def delete_folder(folder_path):  
+  if not folder_path:
+    return 'WARNING - Folder path cannot be empty.'
+  if not os.listdir(folder_path):
+    os.rmdir(folder_path)
+    return "Deleted the folder " + folder_path
+  else:
+    return "EXCEPTION - The folder " + folder_path + " is not empty."
+
+
+# Read a file path
 def read_file(file_path):
   if not file_path:
     return 'File path cannot be empty.'
   try:
     with open(file_path) as readfile:
       lines = readfile.readlines()
-      print('Read the file - {} and the content is:'.format(file_path))
-      print(lines)
       return 'Read the file - {}'.format(file_path)
   except Exception as exception:
-    print(exception)
-    return exception
-
-
-# deletes the file if present else prints the message file does not exists
-def delete_file(file_path):
-  if not file_path:
-    return 'File path cannot be empty.'
-  import os
-  if os.path.isfile(file_path):
-    os.remove(file_path)
-    message = 'Deleted the file - {}'.format(file_path)
-    print(message)
-    return(message)
-  else:
-    message = '{} does not exist'.format(file_path)
-    print(message)
-    return message
+    return 'Exception in file_utils.read_file - ' + str(exception)
 
 
 # Create a new folder
-def create_folder(path, folder_name):
+def create_folder_in_path(path, folder_name):
   folder = path + '/' + folder_name
   if not path or not folder_name:
     return 'Path or Folder name cannot be empty.'
   try:
     # Create target Folder
-    import os
-    os.mkdir(folder)
-    message = "Folder " + folder + " created."
-    print(message)
-    return message 
+    os.makedirs(folder)
+    return "Created a new folder - " + folder
   except FileExistsError:
-    message = "Folder " + folder + " already exists."
-    print(message)
-    return message
-
-
-# Delete the existing folder
-def delete_folder(folder_path):  
-  if not folder_path:
-    return 'Folder path cannot be empty.'
-  import os
-  if not os.listdir(folder_path):
-    os.rmdir(folder_path)
-    message = "Folder " + folder_path + " deleted."
-    print(message)
-    return message 
-  else:
-    message = "Folder " + folder_path + " is not empty."
-    print(message)
-    return message
-  
+    return 'Exception in file_utils.create_folder - ' + folder + " already exists."
