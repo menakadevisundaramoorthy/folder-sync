@@ -4,11 +4,12 @@ import os
 from datetime import datetime
 from file_utils import *
 from pathlib import Path
-import time
+import time, threading
 
 SOURCE_FOLDER = sys.argv[1]
 LOG_FILE = sys.argv[2]
-LAST_SYNC_TIME = sys.argv[3] if sys.argv[3] is not None else 0
+SYNC_INTERVAL_IN_SECONDS = int(sys.argv[3])
+LAST_SYNC_TIME = float(0)
 TARGET_FOLDER = SOURCE_FOLDER + "_replica"
 
 if os.name == 'nt':
@@ -24,6 +25,7 @@ def file_is_hidden(p):
 logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 def perform_sync():
+  print('---------------------- FOLDER SYNC - BEGIN ----------------------')
   log_and_print('Folder sync started - ' + str(time.time()))
   if is_folder_exists(SOURCE_FOLDER):
     if not is_folder_exists(TARGET_FOLDER):
@@ -38,7 +40,8 @@ def perform_sync():
       new_target_data_set.add(target_data)
 
       # logic to verify the last sync time and perform sync only on the delta changes
-      if str(os.path.getmtime(source_data)) > LAST_SYNC_TIME:
+      global LAST_SYNC_TIME
+      if (float(os.path.getmtime(source_data)) > LAST_SYNC_TIME) or (float(os.path.getctime(source_data)) > LAST_SYNC_TIME):
         if os.path.isdir(source_data):
           if not is_folder_exists(target_data):
             log_and_print(create_folder(target_data))
@@ -65,7 +68,11 @@ def perform_sync():
       else:
         log_and_print(delete_file(str(delete_data)))
     # END delete source file/folder to target file/folder
-  log_and_print("Folder sync completed - " + str(time.time()))
+  end_time = time.time()
+  LAST_SYNC_TIME = float(end_time);
+  log_and_print("Folder sync completed - " + str(end_time))
+  print('---------------------- FOLDER SYNC - END   ----------------------')
+    
 
 def log_and_print(message):
   print(message)
@@ -76,5 +83,7 @@ def log_and_print(message):
   else:
     logging.info(message)
 
-
-perform_sync()
+ticker = threading.Event()
+while not ticker.wait(SYNC_INTERVAL_IN_SECONDS):
+  perform_sync()
+    
