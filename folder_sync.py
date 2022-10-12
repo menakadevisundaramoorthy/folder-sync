@@ -42,18 +42,8 @@ def perform_sync():
       # logic to verify the last sync time and perform sync only on the delta changes
       global LAST_SYNC_TIME
       if (float(os.path.getmtime(source_data)) > LAST_SYNC_TIME) or (float(os.path.getctime(source_data)) > LAST_SYNC_TIME):
-        if os.path.isdir(source_data):
-          if not is_folder_exists(target_data):
-            log_and_print(create_folder(target_data))
-        else:
-          if not file_is_hidden(os.path.basename(source_data)):
-            folder_path_from_file = os.path.abspath(target_data).replace('/' + os.path.basename(target_data), '')
-            if not is_folder_exists(folder_path_from_file):
-              log_and_print(create_folder(folder_path_from_file))
-            if os.path.exists(target_data):
-              log_and_print(delete_file(target_data))
-            with open(source_data) as read_file: content = read_file.read()
-            log_and_print(create_or_update_file(target_data, content, False))
+        print(float(LAST_SYNC_TIME) > float(0))
+        create_file_or_folder(source_data, target_data, float(LAST_SYNC_TIME) > float(0))
     # END to create or modify new/existing source file/folder to target file/folder
 
     # BEGIN delete source file/folder to target file/folder
@@ -73,13 +63,31 @@ def perform_sync():
   log_and_print("Folder sync completed - " + str(end_time))
   print('---------------------- FOLDER SYNC - END   ----------------------')
     
+def create_file_or_folder(source_data, target_data, is_delta_sync):
+  if os.path.isdir(source_data):
+    if not is_folder_exists(target_data):
+      log_and_print(create_folder(target_data))
+      if is_delta_sync:
+        new_folder_data = set(sorted(Path(source_data).rglob("*"), key =lambda directory_element: os.path.getmtime(directory_element)))
+        for folder_data in new_folder_data:
+          new_target_data = os.path.abspath(folder_data).replace(SOURCE_FOLDER, TARGET_FOLDER);
+          create_file_or_folder(folder_data, new_target_data, is_delta_sync)
+  else:
+    if not file_is_hidden(os.path.basename(source_data)):
+      folder_path_from_file = os.path.abspath(target_data).replace('/' + os.path.basename(target_data), '')
+      if not is_folder_exists(folder_path_from_file):
+        log_and_print(create_folder(folder_path_from_file))
+      if os.path.exists(target_data):
+        log_and_print(delete_file(target_data))
+      with open(source_data) as read_file: content = read_file.read()
+      log_and_print(create_or_update_file(target_data, content, False))
 
 def log_and_print(message):
   print(message)
   if (message.startswith('WARNING - ')):
-    loggin.warning(message.replace('WARNING - ', ''))
+    logging.warning(message.replace('WARNING - ', ''))
   elif(message.startswith('EXCEPTION')):
-    loggin.exception(message.replace('EXCEPTION - ', ''))
+    logging.exception(message.replace('EXCEPTION - ', ''))
   else:
     logging.info(message)
 
