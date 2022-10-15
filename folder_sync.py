@@ -6,6 +6,7 @@ from file_utils import *
 from pathlib import Path
 import time, threading
 
+
 SOURCE_FOLDER = sys.argv[1]
 LOG_FILE = sys.argv[2]
 SYNC_INTERVAL_IN_SECONDS = int(sys.argv[3])
@@ -15,18 +16,15 @@ TARGET_FOLDER = SOURCE_FOLDER + "_replica"
 if os.name == 'nt':
   import win32api, win32con
 
-def file_is_hidden(p):
-  if os.name == 'nt':
-    attribute = win32api.GetFileAttributes(p)
-    return attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
-  else:
-    return p.startswith('.') #linux-osx
 
 logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+if not os.path.exists("folder_sync_metrics.csv"):
+  create_metrics_file()
 
 def perform_sync():
   print('---------------------- FOLDER SYNC - BEGIN ----------------------')
-  log_and_print('Folder sync started - ' + str(time.time()))
+  start_time = time.time()
+  log_and_print('Folder sync started - ' + str(start_time))
   if is_folder_exists(SOURCE_FOLDER):
     if not is_folder_exists(TARGET_FOLDER):
       log_and_print('The folder ' + TARGET_FOLDER + ' does not exists.')
@@ -42,7 +40,6 @@ def perform_sync():
       # logic to verify the last sync time and perform sync only on the delta changes
       global LAST_SYNC_TIME
       if (float(os.path.getmtime(source_data)) > LAST_SYNC_TIME) or (float(os.path.getctime(source_data)) > LAST_SYNC_TIME):
-        print(float(LAST_SYNC_TIME) > float(0))
         create_file_or_folder(source_data, target_data, float(LAST_SYNC_TIME) > float(0))
     # END to create or modify new/existing source file/folder to target file/folder
 
@@ -61,6 +58,8 @@ def perform_sync():
   end_time = time.time()
   LAST_SYNC_TIME = float(end_time);
   log_and_print("Folder sync completed - " + str(end_time))
+  sync_time = end_time - start_time
+  capture_metrics(sync_time)
   print('---------------------- FOLDER SYNC - END   ----------------------')
     
 def create_file_or_folder(source_data, target_data, is_delta_sync):
@@ -90,6 +89,7 @@ def log_and_print(message):
     logging.exception(message.replace('EXCEPTION - ', ''))
   else:
     logging.info(message)
+
 
 ticker = threading.Event()
 while not ticker.wait(SYNC_INTERVAL_IN_SECONDS):
