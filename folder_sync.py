@@ -1,10 +1,7 @@
-import sys
-import logging
-import os
+import sys,logging,os, threading
 from datetime import datetime
 from file_utils import *
 from pathlib import Path
-import time, threading
 
 
 SOURCE_FOLDER = sys.argv[1]
@@ -18,18 +15,37 @@ if os.name == 'nt':
 
 
 logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-if not os.path.exists("folder_sync_metrics.csv"):
+if not os.path.exists('meta/folder_sync_metrics.csv'):
   create_metrics_file()
 
 def perform_sync():
-  print('---------------------- FOLDER SYNC - BEGIN ----------------------')
-  start_time = time.time()
-  log_and_print('Folder sync started - ' + str(start_time))
+
+  # validate source folder
   if is_folder_exists(SOURCE_FOLDER):
     if not is_folder_exists(TARGET_FOLDER):
       log_and_print('The folder ' + TARGET_FOLDER + ' does not exists.')
       create_folder(TARGET_FOLDER)
+  else:
+    log_and_print('Error: The source folder {} does not exists. Please provide a valid source folder.'.format(SOURCE_FOLDER))
+    exit()
 
+
+  #############################################################
+  ############      Prep work for every sync       ############
+  #############################################################
+  print('############################################################# FOLDER SYNC - BEGIN #############################################################')
+  start_time = datetime.now()
+  log_and_print('Folder sync started at ' + start_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+  global LAST_SYNC_TIME
+  if not LAST_SYNC_TIME:
+    log_and_print('Synchronizing all the files and folders from the path {}'.format(SOURCE_FOLDER))
+  else:
+    log_and_print('Synchronizing the files and folders created/modified/removed after the last sync completed time ' + datetime.fromtimestamp(LAST_SYNC_TIME).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3] + ' from the path ' + SOURCE_FOLDER)
+
+
+    #############################################################
+    ############   Create/Modify files and Folders   ############
+    #############################################################
     # BEGIN to create or modify new/existing source file/folder to target file/folder
     source_data_set = set(sorted(Path(SOURCE_FOLDER).rglob("*"), key =lambda directory_element: os.path.getmtime(directory_element)))
     new_target_data_set = set()
@@ -38,11 +54,14 @@ def perform_sync():
       new_target_data_set.add(target_data)
 
       # logic to verify the last sync time and perform sync only on the delta changes
-      global LAST_SYNC_TIME
       if (float(os.path.getmtime(source_data)) > LAST_SYNC_TIME) or (float(os.path.getctime(source_data)) > LAST_SYNC_TIME):
         create_file_or_folder(source_data, target_data, float(LAST_SYNC_TIME) > float(0))
     # END to create or modify new/existing source file/folder to target file/folder
 
+
+    #############################################################
+    ############     Remove files and Folders        ############
+    #############################################################
     # BEGIN delete source file/folder to target file/folder
     target_data_set = set(sorted(Path(TARGET_FOLDER).rglob("*"), key =lambda directory_element: os.path.getmtime(directory_element)))
     created_targets = set()
@@ -55,13 +74,19 @@ def perform_sync():
       else:
         log_and_print(delete_file(str(delete_data)))
     # END delete source file/folder to target file/folder
-  end_time = time.time()
-  LAST_SYNC_TIME = float(end_time);
-  log_and_print("Folder sync completed - " + str(end_time))
-  sync_time = end_time - start_time
+
+
+  #############################################################
+  ############   Work after every sync completion  ############
+  #############################################################
+  end_time = datetime.now()
+  LAST_SYNC_TIME = datetime.timestamp(end_time)
+  log_and_print("Folder sync completed at " + end_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+  sync_time = datetime.timestamp(end_time) - datetime.timestamp(start_time)
   capture_metrics(sync_time)
-  print('---------------------- FOLDER SYNC - END   ----------------------')
-    
+  print('############################################################# FOLDER SYNC - END   #############################################################\n')
+
+
 def create_file_or_folder(source_data, target_data, is_delta_sync):
   if os.path.isdir(source_data):
     if not is_folder_exists(target_data):
@@ -81,6 +106,7 @@ def create_file_or_folder(source_data, target_data, is_delta_sync):
       with open(source_data) as read_file: content = read_file.read()
       log_and_print(create_or_update_file(target_data, content, False))
 
+
 def log_and_print(message):
   print(message)
   if (message.startswith('WARNING - ')):
@@ -92,6 +118,7 @@ def log_and_print(message):
 
 
 ticker = threading.Event()
+perform_sync()
 while not ticker.wait(SYNC_INTERVAL_IN_SECONDS):
   perform_sync()
     

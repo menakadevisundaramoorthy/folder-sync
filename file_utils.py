@@ -83,7 +83,6 @@ def create_folder_in_path(path, folder_name):
     return 'Exception in file_utils.create_folder - ' + folder + " already exists."
 
 
-
 def file_is_hidden(p):
   if os.name == 'nt':
     attribute = win32api.GetFileAttributes(p)
@@ -92,20 +91,22 @@ def file_is_hidden(p):
     return p.startswith('.') #linux-osx
 
 
-# Metrics utils related to CSV
+# Metrics Utils
+
 
 def capture_metrics(sync_time):
   last_sync_number = 0
-  if read_csv('folder_sync_metrics.csv'):
-    last_sync_number = int(read_csv('folder_sync_metrics.csv')[-1]['sync_number'])
-  with open('folder_sync_metrics.csv', 'a', newline='') as csvfile:
+  csv_data = read_csv('meta/folder_sync_metrics.csv')
+  if csv_data:
+    last_sync_number = int(csv_data[-1]['sync_number'])
+  with open('meta/folder_sync_metrics.csv', 'a', newline='') as csvfile:
     fieldnames = ['sync_number', 'sync_time']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-    writer.writerow({'sync_number': last_sync_number + 1, 'sync_time': sync_time})
+    writer.writerow({'sync_number': last_sync_number + 1, 'sync_time': float(sync_time)})
 
 
 def create_metrics_file():
-  with open('folder_sync_metrics.csv', 'w', newline='') as csvfile:
+  with open('meta/folder_sync_metrics.csv', 'w', newline='') as csvfile:
     fieldnames = ['sync_number', 'sync_time']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
@@ -126,4 +127,3 @@ def get_values_from_csv(csv_file, field_name):
 
 def get_values_from_dict(input_dict, field_name):
   return [d[field_name] for d in input_dict if field_name in d]
-

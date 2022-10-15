@@ -11,9 +11,8 @@ function createSyncTimeMetrics(sync_number, sync_time) {
                 title: "Sync number",
             },
             axisY: {
-                title: "Time taken for sync",
+                title: "Time taken for sync (sec)",
             },
-            animationEnabled: true,
             data: [{
                 type: "column",
                 dataPoints: dps
@@ -22,7 +21,7 @@ function createSyncTimeMetrics(sync_number, sync_time) {
 
         var xVal = 0;
         var yVal = 100;
-        var updateInterval = 1000;
+        var updateInterval = 2000;
         var dataLength = 20; // number of dataPoints visible at any point
 
         var updateChart = function(count) {
