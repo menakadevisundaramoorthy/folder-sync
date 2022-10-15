@@ -33,7 +33,7 @@ def perform_sync():
   #############################################################
   ############      Prep work for every sync       ############
   #############################################################
-  print('############################################################# FOLDER SYNC - BEGIN #############################################################')
+  print('###################################### FOLDER SYNC - BEGIN ######################################')
   start_time = datetime.now()
   log_and_print('Folder sync started at ' + start_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
   global LAST_SYNC_TIME
@@ -43,37 +43,37 @@ def perform_sync():
     log_and_print('Synchronizing the files and folders created/modified/removed after the last sync completed time ' + datetime.fromtimestamp(LAST_SYNC_TIME).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3] + ' from the path ' + SOURCE_FOLDER)
 
 
-    #############################################################
-    ############   Create/Modify files and Folders   ############
-    #############################################################
-    # BEGIN to create or modify new/existing source file/folder to target file/folder
-    source_data_set = set(sorted(Path(SOURCE_FOLDER).rglob("*"), key =lambda directory_element: os.path.getmtime(directory_element)))
-    new_target_data_set = set()
-    for source_data in source_data_set:
-      target_data = os.path.abspath(source_data).replace(SOURCE_FOLDER, TARGET_FOLDER)
-      new_target_data_set.add(target_data)
+  #############################################################
+  ############   Create/Modify files and Folders   ############
+  #############################################################
+  # BEGIN to create or modify new/existing source file/folder to target file/folder
+  source_data_set = set(sorted(Path(SOURCE_FOLDER).rglob("*"), key =lambda directory_element: os.path.getmtime(directory_element)))
+  new_target_data_set = set()
+  for source_data in source_data_set:
+    target_data = os.path.abspath(source_data).replace(SOURCE_FOLDER, TARGET_FOLDER)
+    new_target_data_set.add(target_data)
 
-      # logic to verify the last sync time and perform sync only on the delta changes
-      if (float(os.path.getmtime(source_data)) > LAST_SYNC_TIME) or (float(os.path.getctime(source_data)) > LAST_SYNC_TIME):
-        create_file_or_folder(source_data, target_data, float(LAST_SYNC_TIME) > float(0))
-    # END to create or modify new/existing source file/folder to target file/folder
+    # logic to verify the last sync time and perform sync only on the delta changes
+    if (float(os.path.getmtime(source_data)) > LAST_SYNC_TIME) or (float(os.path.getctime(source_data)) > LAST_SYNC_TIME):
+      create_file_or_folder(source_data, target_data, float(LAST_SYNC_TIME) > float(0))
+  # END to create or modify new/existing source file/folder to target file/folder
 
 
-    #############################################################
-    ############     Remove files and Folders        ############
-    #############################################################
-    # BEGIN delete source file/folder to target file/folder
-    target_data_set = set(sorted(Path(TARGET_FOLDER).rglob("*"), key =lambda directory_element: os.path.getmtime(directory_element)))
-    created_targets = set()
-    for i in target_data_set:
-      created_targets.add(os.path.abspath(i))
-    delete_data_set = created_targets - new_target_data_set
-    for delete_data in delete_data_set:
-      if os.path.isdir(delete_data):
-        log_and_print(delete_folder(str(delete_data)))
-      else:
-        log_and_print(delete_file(str(delete_data)))
-    # END delete source file/folder to target file/folder
+  #############################################################
+  ############     Remove files and Folders        ############
+  #############################################################
+  # BEGIN delete source file/folder to target file/folder
+  target_data_set = set(sorted(Path(TARGET_FOLDER).rglob("*"), key =lambda directory_element: os.path.getmtime(directory_element)))
+  created_targets = set()
+  for i in target_data_set:
+    created_targets.add(os.path.abspath(i))
+  delete_data_set = created_targets - new_target_data_set
+  for delete_data in delete_data_set:
+    if os.path.isdir(delete_data):
+      log_and_print(delete_folder(str(delete_data)))
+    else:
+      log_and_print(delete_file(str(delete_data)))
+  # END delete source file/folder to target file/folder
 
 
   #############################################################
@@ -84,7 +84,7 @@ def perform_sync():
   log_and_print("Folder sync completed at " + end_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
   sync_time = datetime.timestamp(end_time) - datetime.timestamp(start_time)
   capture_metrics(sync_time)
-  print('############################################################# FOLDER SYNC - END   #############################################################\n')
+  print('###################################### FOLDER SYNC - END   ######################################\n')
 
 
 def create_file_or_folder(source_data, target_data, is_delta_sync):

@@ -4,8 +4,8 @@ One-way periodic folder synchronization between source and replica folder
 
 ## Table of contents
 
-- [Pre-requisite](#pre-requisites)
-- [How to use folder-sync?](#how-to-use-folder-sync?)
+- [Pre requisite](#pre-requisites)
+- [How to use folder sync?](#how-to-use-folder-sync?)
 - [Test Cases](#test-cases)
 - [Documentation](#documentation)
 - [Metrics](#metrics)
