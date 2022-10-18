@@ -128,5 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-meta/
+meta/folder_sync_metrics.csv
+meta/temp.html
 .DS_Store
